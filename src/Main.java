@@ -1,13 +1,34 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-void main() {
-  //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-  // to see how IntelliJ IDEA suggests fixing it.
-  IO.println(String.format("Hello and welcome!"));
+public class Main {
+    public static void main(String[] args) {
+        // 1. Die benötigten Services starten
+        SicherheitsService security = new SicherheitsService();
+        DatenService datenService = new DatenService("duenasworld_vault.txt");
 
-  for (int i = 1; i <= 5; i++) {
-    //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-    // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-    IO.println("i = " + i);
-  }
+        System.out.println("--- REGISTRIERUNG ---");
+        // 2. Einen neuen Benutzer im RAM erstellen
+        Benutzer neuRegistriert = new Benutzer(
+                "Duenasworld",
+                "SuperSicher123!",
+                "duenasworld@vault.ch",
+                "Duena",
+                "W.",
+                security
+        );
+
+        // 3. Auf der Festplatte speichern
+        boolean gespeichert = datenService.speichereBenutzer(neuRegistriert);
+        System.out.println("Benutzer erfolgreich auf Festplatte gesichert: " + gespeichert);
+
+
+        System.out.println("\n--- LOGIN-VERSUCH (Direkt von Festplatte) ---");
+        // 4. Wir versuchen uns einzuloggen. Das Programm liest nun live die Datei!
+
+        // Test A: Falsches Passwort
+        boolean loginFalsch = datenService.ladeUndPruefeLogin("duenasworld2026", "FalschesPW", security);
+        System.out.println("Login mit falschem PW erfolgreich? " + loginFalsch); // Sollte false sein
+
+        // Test B: Korrektes Passwort
+        boolean loginRichtig = datenService.ladeUndPruefeLogin("duenasworld2026", "SuperSicher123!", security);
+        System.out.println("Login mit korrektem PW erfolgreich? " + loginRichtig); // Sollte true sein
+    }
 }
