@@ -28,11 +28,12 @@ class DatenServiceTest {
 
         // Standard-Testbenutzer vorbereiten
         testUser = new Benutzer(
-                "test_duenasworld",
-                "SafePassword2026!",
-                "test@vault.ch",
-                "Duena",
-                "Test",
+                "duenasworld_vault_test",
+                "Geheim123!",
+                "test@example.com",
+                "Duenas",
+                "World",
+                "Meine Oma ist die Beste!",
                 security
         );
     }
@@ -55,14 +56,14 @@ class DatenServiceTest {
     @Test
     void testSpeichereBenutzerErfolgreich() {
         // Ein neuer Benutzername darf vor dem Speichern noch nicht existieren
-        assertFalse(datenService.existiertBenutzername("test_duenasworld"));
+        assertFalse(datenService.existiertBenutzername("duenasworld_vault_test"));
 
         // Das Speichern muss erfolgreich sein (true)
         boolean gespeichert = datenService.speichereBenutzer(testUser);
         assertTrue(gespeichert, "Der Benutzer hätte erfolgreich gespeichert werden müssen.");
 
         // JETZT muss der Benutzername als vergeben markiert sein
-        assertTrue(datenService.existiertBenutzername("test_duenasworld"));
+        assertTrue(datenService.existiertBenutzername("duenasworld_vault_test"));
     }
 
     @Test
@@ -71,7 +72,11 @@ class DatenServiceTest {
         assertTrue(datenService.speichereBenutzer(testUser));
 
         // Zweiter Registrierungsversuch mit exakt demselben Namen (aber z.B. anderer E-Mail)
-        Benutzer doppelterUser = new Benutzer("test_duenasworld", "AnderesPW123!", "andere@mail.ch", security);
+        Benutzer doppelterUser = new Benutzer("duenasworld_vault_test",
+                "AnderesPW123!",
+                "andere@mail.ch",
+                "andere Sicherheitsabfrage",
+                security);
 
         // Das Speichern muss vom DatenService abgewiesen werden (false)
         boolean gespeichert = datenService.speichereBenutzer(doppelterUser);
@@ -94,7 +99,7 @@ class DatenServiceTest {
         datenService.speichereBenutzer(testUser);
 
         // Login mit den exakt richtigen Daten prüfen (Soll: true)
-        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("test_duenasworld", "SafePassword2026!", security);
+        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("duenasworld_vault_test", "Geheim123!", security);
         assertTrue(loginErfolgreich, "Der Login mit korrekten Daten hätte funktionieren müssen.");
     }
 
@@ -103,7 +108,7 @@ class DatenServiceTest {
         datenService.speichereBenutzer(testUser);
 
         // Richtiger Name, aber falsches Passwort (Soll: false)
-        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("test_duenasworld", "FalschesPW", security);
+        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("duenasworld_vault_test", "FalschesPW", security);
         assertFalse(loginErfolgreich, "Login mit falschem Passwort darf nicht erfolgreich sein.");
     }
 
@@ -112,7 +117,7 @@ class DatenServiceTest {
         datenService.speichereBenutzer(testUser);
 
         // Falscher Name, richtiges Passwort (Soll: false)
-        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("unbekannter_user", "SafePassword2026!", security);
+        boolean loginErfolgreich = datenService.ladeUndPruefeLogin("unbekannter_user", "Geheim123!", security);
         assertFalse(loginErfolgreich, "Ein unbekannter Benutzer darf sich nicht einloggen können.");
     }
 
@@ -152,4 +157,55 @@ class DatenServiceTest {
         temporaereDatei.setWritable(true);
     }
 
+    // ==========================================
+    // TESTS FÜR: ladeUndPruefePasswortRecovery()
+    // ==========================================
+
+    @Test
+    void ladeUndPruefePasswortRecoveryErfolgreich() {
+        // Erst Benutzer speichern
+        datenService.speichereBenutzer(testUser);
+
+        // Login mit den exakt richtigen Daten prüfen (Soll: true)
+        boolean loginErfolgreich = datenService.ladeUndPruefePasswortRecovery("duenasworld_vault_test", "test@example.com", "Meine Oma ist die Beste!", security);
+        assertTrue(loginErfolgreich, "Der Login mit korrekten Daten hätte funktionieren müssen.");
+    }
+
+    /*
+            testUser = new Benutzer(
+                "duenasworld_vault_test",
+                "Geheim123!",
+                "test@example.com",
+                "Duenas",
+                "World",
+                "Meine Oma ist die Beste!",
+                security
+     */
+
+    @Test
+    void ladeUndPruefePasswortRecoveryMitFalschemRecoveryKeyLiefertFalse() {
+        datenService.speichereBenutzer(testUser);
+
+        // Richtiger Name, aber falsches Passwort (Soll: false)
+        boolean loginErfolgreich = datenService.ladeUndPruefePasswortRecovery("duenasworld_vault_test", "test@example.com", "Mein Opa ist der Beste!", security);
+        assertFalse(loginErfolgreich, "Ein falscher RecoveryKey darf nicht dazu führen, dass ein Passwort neu gesetzt werden kann.");
+    }
+
+    @Test
+    void ladeUndPruefePasswortRecoveryMitFalschemNamenLiefertFalse() {
+        datenService.speichereBenutzer(testUser);
+
+        // Falscher Name, richtiges Passwort (Soll: false)
+        boolean loginErfolgreich = datenService.ladeUndPruefePasswortRecovery("unbekannter_user", "test@example.com", "Meine Oma ist die Beste!", security);
+        assertFalse(loginErfolgreich, "Ein unbekannter Benutzer darf nicht ein Passwort neu setzten können.");
+    }
+
+    @Test
+    void ladeUndPruefePasswortRecoveryMitFalscherEmailLiefertFalse() {
+        datenService.speichereBenutzer(testUser);
+
+        // Falscher Name, richtiges Passwort (Soll: false)
+        boolean loginErfolgreich = datenService.ladeUndPruefePasswortRecovery("unbekannter_user", "falsche@email.com", "Meine Oma ist die Beste!", security);
+        assertFalse(loginErfolgreich, "Eine falsch erfasste Email darf nicht dazu führen, dass ein Passwort neu gesetzt werden kann.");
+    }
 }

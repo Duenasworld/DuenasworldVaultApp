@@ -43,9 +43,11 @@ public class DatenService {
         // Wir bauen eine Zeile im CSV-Format: Wert;Wert;Wert
         String datenZeile = user.getBenutzername() + ";"
                 + user.getVerschluesseltesPasswort() + ";"
-                + user.getSalt() + ";"
+                + user.getSaltPasswort() + ";"
                 + user.getEmail() + ";"
-                + user.getVollerName(); // Vorname/Nachname stecken hier drin
+                + user.getVollerName() + ";" // Vorname/Nachname stecken hier drin
+                + user.getVerschluesseltenRecoveryKey() + ";"
+                + user.getSaltRecoveryKey();
 
         // FileWriter mit 'true' sorgt dafür, dass neue Benutzer unten ANGEHÄNGT werden
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(dateiPfad, true))) {
@@ -88,7 +90,7 @@ public class DatenService {
                     // Wenn der Benutzername übereinstimmt, prüfen wir das Passwort
                     if (dateiBenutzername.equalsIgnoreCase(gesuchterName)) {
                         // Wir berechnen den Hash des eingegebenen Passworts mit dem Salz aus der Datei
-                        String neuBerechneterHash = security.hashPasswort(eingegebenesPW, dateiSalt);
+                        String neuBerechneterHash = security.hashData(eingegebenesPW, dateiSalt);
                         // Wenn der berechnete Hash dem gespeicherten entspricht -> Login erfolgreich!
                         return dateiHash.equals(neuBerechneterHash);
                     }
@@ -131,4 +133,52 @@ public class DatenService {
         return false; // Name wurde nicht gefunden und ist frei
     }
 
+    /**
+     * Sucht in der Textdatei nach einem Benutzernamen, seinem Email und dem RecoveryKey, ob der Benutzer das vergessene
+     * Passwort ändern darf, auch wenn er das alte nicht mehr weiss.
+     *
+     * @param benutzername       Der registrierte Benutzername.
+     * @param userEmail          Das registrierte E-Mail.
+     * @param recoveryKey        Der erfasste RecoveryKey .
+     * @param security           Der Sicherheitsdienst zur Hash-Berechnung.
+     * @return true, wenn der Benutzer existiert, Email und recoveryKey stimmen überein,
+     * andernfalls false und es darf kein neues Passwort gesetzt werden
+     */
+    public boolean ladeUndPruefePasswortRecovery(String benutzername, String userEmail, String recoveryKey, SicherheitsService security) {
+        File datei = new File(dateiPfad);
+        if (!datei.exists()) {
+            return false; // Keine Datei da = noch kein Benutzer registriert
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(datei))) {
+            String zeile;
+            // Wir lesen die Datei Zeile für Zeile durch
+            while ((zeile = reader.readLine()) != null) {
+                // Zeile anhand des Semikolons in ein Array aufteilen
+                String[] teile = zeile.split(";");
+
+                if (teile.length >= 4) {
+                    String dateiBenutzername = teile[0];
+                    String dateiEmail = teile[3];
+                    String dateiHash = teile[5];
+                    String dateiSalt = teile[6];
+
+                    // Wenn der Benutzername übereinstimmt, prüfen wir das E-Mail
+                    if (dateiBenutzername.equalsIgnoreCase(benutzername)) {
+                        // Wenn das E-Mail übereinstimmt, vergleichen wir ob der korrekte RecoveryKey erfasst wurde zusammen mit dem hinterlegten Hash
+                        if (dateiEmail.equalsIgnoreCase(userEmail)) {
+                            // Wir berechnen den Hash des eingegebenen RecoveryKey mit dem Salz aus der Datei
+                            String neuBerechneterHash = security.hashData(recoveryKey, dateiSalt);
+                            // Wenn der berechnete Hash dem gespeicherten entspricht -> Passwort darf geändert werden!
+                            return dateiHash.equals(neuBerechneterHash);
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Fehler beim Lesen der Datei: " + e.getMessage());
+        }
+
+        return false; // Benutzer nicht gefunden, Email falsch oder RecoveryKey nicht korrekt
+    }
 }

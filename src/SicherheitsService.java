@@ -26,12 +26,12 @@ public class SicherheitsService {
     /**
      * Verschlüsselt ein Klartext-Passwort kombiniert mit einem Salz.
      *
-     * @param klartext Das zu verschlüsselnde Passwort.
+     * @param eingabe Das zu verschlüsselnde Attribut.
      * @param salt     Das Salz des Benutzers (darf nicht leer sein).
      * @return Der berechnete SHA-256-Hash.
-     * @throws IllegalArgumentException Wenn das Salz null oder komplett leer ist.
+     * @throws IllegalArgumentException wenn das Salz null oder komplett leer ist.
      */
-    public String hashPasswort(String klartext, String salt) {
+    public String hashData(String eingabe, String salt) {
         // Wir prüfen den Fehlerfall aktiv ab und werfen eine Exception
         if (salt == null || salt.trim().isEmpty()) {
             throw new IllegalArgumentException("Das Salz darf nicht null oder leer sein!");
@@ -39,7 +39,7 @@ public class SicherheitsService {
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            String kombination = klartext + salt;
+            String kombination = eingabe + salt;
             byte[] hashBytes = digest.digest(kombination.getBytes());
             return HexFormat.of().formatHex(hashBytes);
         } catch (NoSuchAlgorithmException e) {

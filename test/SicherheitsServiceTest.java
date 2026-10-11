@@ -78,8 +78,8 @@ class SicherheitsServiceTest {
         String salt = "abc123salt";
 
         // Da Hashing deterministisch ist, muss bei gleicher Eingabe exakt derselbe Hash entstehen
-        String hash1 = security.hashPasswort(passwort, salt);
-        String hash2 = security.hashPasswort(passwort, salt);
+        String hash1 = security.hashData(passwort, salt);
+        String hash2 = security.hashData(passwort, salt);
 
         assertEquals(hash1, hash2, "Gleiches Passwort und Salz müssen denselben Hash erzeugen.");
     }
@@ -89,8 +89,8 @@ class SicherheitsServiceTest {
         String passwort = "MeinPasswort123!";
 
         // Das gleiche Passwort mit zwei verschiedenen Salzen muss völlig andere Hashes liefern
-        String hash1 = security.hashPasswort(passwort, "saltA");
-        String hash2 = security.hashPasswort(passwort, "saltB");
+        String hash1 = security.hashData(passwort, "saltA");
+        String hash2 = security.hashData(passwort, "saltB");
 
         assertNotEquals(hash1, hash2, "Unterschiedliche Salze müssen unterschiedliche Hashes erzeugen.");
     }
@@ -101,7 +101,7 @@ class SicherheitsServiceTest {
         IllegalArgumentException geworfeneException = assertThrows(
                 IllegalArgumentException.class,
                 () -> {
-                    security.hashPasswort("MeinPasswort123!", ""); // Hier übergeben wir ein leeres Salz
+                    security.hashData("MeinPasswort123!", ""); // Hier übergeben wir ein leeres Salz
                 },
                 "Es hätte eine IllegalArgumentException geworfen werden müssen."
         );

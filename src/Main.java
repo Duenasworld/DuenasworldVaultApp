@@ -7,11 +7,12 @@ public class Main {
         System.out.println("--- REGISTRIERUNG ---");
         // 2. Einen neuen Benutzer im RAM erstellen
         Benutzer neuRegistriert = new Benutzer(
-                "Duenasworld",
+                "Duenasworld2",
                 "SuperSicher123!",
                 "duenasworld@vault.ch",
                 "Duena",
                 "W.",
+                "Meine Mama ist die Beste!",
                 security
         );
 

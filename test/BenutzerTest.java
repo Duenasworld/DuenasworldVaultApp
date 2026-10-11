@@ -16,11 +16,12 @@ class BenutzerTest {
         security = new SicherheitsService();
         // Wir registrieren einen Standardbenutzer für die Tests
         testUser = new Benutzer(
-                "duenasworld_vault",
+                "duenasworld_vault_test",
                 "Geheim123!",
-                "duenasworld@example.com",
-                "Duena",
+                "test@example.com",
+                "Duenas",
                 "World",
+                "Meine Oma ist die Beste!",
                 security
         );
     }
@@ -31,13 +32,13 @@ class BenutzerTest {
 
     @Test
     void testGetVollerNameLiefertKorrekteFormatierung() {
-        assertEquals("Duena World", testUser.getVollerName());
+        assertEquals("Duenas World", testUser.getVollerName());
     }
 
     @Test
     void testGetVollerNameWennNamenOptionalNullSind() {
         // Wir testen den zweiten, überladenen Konstruktor ohne Vor-/Nachnamen
-        Benutzer minimalerUser = new Benutzer("anonymous", "SicheresPW2026!", "anon@test.ch", security);
+        Benutzer minimalerUser = new Benutzer("anonymous", "SicheresPW2026!", "anon@test.ch", "Meine Oma ist die Beste!", security);
         assertEquals("Kein Name hinterlegt", minimalerUser.getVollerName());
     }
 
@@ -57,11 +58,11 @@ class BenutzerTest {
 
     @Test
     void testAenderePasswortErfolgreich() {
-        String altesSalt = testUser.getSalt();
+        String altesSalt = testUser.getSaltPasswort();
 
         boolean erfolg = testUser.aenderePasswort("Geheim123!", "NeuesSafePW2026!", security);
         assertTrue(erfolg, "Das Passwort hätte erfolgreich geändert werden müssen.");
-        assertNotEquals(altesSalt, testUser.getSalt(), "Das Salz hätte neu generiert werden müssen.");
+        assertNotEquals(altesSalt, testUser.getSaltPasswort(), "Das Salz hätte neu generiert werden müssen.");
         assertTrue(testUser.pruefePasswort("NeuesSafePW2026!", security));
     }
 
@@ -90,22 +91,33 @@ class BenutzerTest {
     @Test
     void testGetEmailLiefertKorrekteAdresse() {
         // Prüft, ob der Getter den korrekten E-Mail-String zurückgibt
-        assertEquals("duenasworld@example.com", testUser.getEmail());
+        assertEquals("test@example.com", testUser.getEmail());
     }
 
     @Test
-    void testGetVerschluesseltesPasswortUndGetSalt() {
+    void testGetVerschluesseltesPasswortUndGetSaltPasswort() {
         // Verifiziert, dass Passwort-Hash und Salz existieren und gefüllt sind
         assertNotNull(testUser.getVerschluesseltesPasswort(), "Passworthash darf nicht null sein.");
         assertFalse(testUser.getVerschluesseltesPasswort().isEmpty(), "Passworthash darf nicht leer sein.");
 
-        assertNotNull(testUser.getSalt(), "Salz darf nicht null sein.");
-        assertFalse(testUser.getSalt().isEmpty(), "Salz darf nicht leer sein.");
+        assertNotNull(testUser.getSaltPasswort(), "Salz darf nicht null sein.");
+        assertFalse(testUser.getSaltPasswort().isEmpty(), "Salz darf nicht leer sein.");
     }
 
     @Test
     void testGetBenutzernameLiefertKorrekterBenutzername() {
         // Prüft, ob der Getter den korrekten Benutzernamen-String zurückgibt
-        assertEquals("duenasworld_vault", testUser.getBenutzername());
+        assertEquals("duenasworld_vault_test", testUser.getBenutzername());
     }
+
+    @Test
+    void testGetVerschluesseltenRecoveryKeyUndGetSaltRecoveryKey() {
+        // Verifiziert, dass Passwort-Hash und Salz existieren und gefüllt sind
+        assertNotNull(testUser.getVerschluesseltenRecoveryKey(), "Passworthash darf nicht null sein.");
+        assertFalse(testUser.getVerschluesseltenRecoveryKey().isEmpty(), "Passworthash darf nicht leer sein.");
+
+        assertNotNull(testUser.getSaltRecoveryKey(), "Salz darf nicht null sein.");
+        assertFalse(testUser.getSaltRecoveryKey().isEmpty(), "Salz darf nicht leer sein.");
+    }
+
 }

@@ -6,10 +6,15 @@
 public class Benutzer {
     private String benutzername;
     private String passwortHash;
-    private String salt;
+    private String saltPasswort;
     private String email;
     private String vorname;
     private String nachname;
+    private String recoveryKeyHash;
+    private String saltRecoveryKey;
+
+    public Benutzer() {
+    }
 
     /**
      * Erstellt einen neuen Benutzer und berechnet direkt den initialen Passwort-Hash.
@@ -19,24 +24,26 @@ public class Benutzer {
      * @param email             Die E-Mail-Adresse des Benutzers.
      * @param vorname           Der Vorname des Benutzers.
      * @param nachname          Der Nachname des Benutzers.
+     * @param recoveryKeyHash   Ein Sicherheitssatz/Phrase zur Wiederherstellung des Logins, falls PW vergessen ging
      * @param security          Die Instanz des Sicherheitsdienstes für die Verschlüsselung.
      */
-    public Benutzer(String benutzername, String klartextPasswort, String email, String vorname, String nachname, SicherheitsService security) {
+    public Benutzer(String benutzername, String klartextPasswort, String email, String vorname, String nachname, String klartextRecoveryKey, SicherheitsService security) {
         this.benutzername = benutzername;
         this.email = email;
         this.vorname = vorname;
         this.nachname = nachname;
 
         initialisereSaltundHashPasswort(klartextPasswort, security);
+        initialisereSaltundRecoveryKey(klartextRecoveryKey, security);
     }
 
     /**
      * Erstellt einen neuen Benutzer mit minimalen Daten (Vor- und Nachname sind optional).
      * Nutzt Constructor Chaining, um den Hauptkonstruktor aufzurufen.
      */
-    public Benutzer(String benutzername, String klartextPasswort, String email, SicherheitsService security) {
+    public Benutzer(String benutzername, String klartextPasswort, String email, String klartextRecoveryKey, SicherheitsService security) {
         // Leitet die Anfrage an den oberen Konstruktor weiter und übergibt null für die Namen
-        this(benutzername, klartextPasswort, email, null, null, security);
+        this(benutzername, klartextPasswort, email, null, null, klartextRecoveryKey, security);
     }
 
 
@@ -48,7 +55,7 @@ public class Benutzer {
      * @return true, wenn das Passwort korrekt ist, andernfalls false.
      */
     public boolean pruefePasswort(String eingegebenesPasswort, SicherheitsService security) {
-        String neuBerechneterHash = security.hashPasswort(eingegebenesPasswort, this.salt);
+        String neuBerechneterHash = security.hashData(eingegebenesPasswort, this.saltPasswort);
         return this.passwortHash.equals(neuBerechneterHash);
     }
 
@@ -83,8 +90,8 @@ public class Benutzer {
         }
 
         // 4. Wenn alle Prüfungen bestanden sind: Neues Salz und neuen Hash erzeugen
-        this.salt = security.generiereZufallssalt();
-        this.passwortHash = security.hashPasswort(neuesPW, this.salt);
+        this.saltPasswort = security.generiereZufallssalt();
+        this.passwortHash = security.hashData(neuesPW, this.saltPasswort);
         return true;
     }
 
@@ -104,8 +111,10 @@ public class Benutzer {
 
     public String getBenutzername() {return this.benutzername;}
     public String getEmail() { return email; }
-    public String getSalt() { return this.salt; }
+    public String getSaltPasswort() { return this.saltPasswort; }
     public String getVerschluesseltesPasswort() { return this.passwortHash; }
+    public String getSaltRecoveryKey() { return this.saltRecoveryKey; }
+    public String getVerschluesseltenRecoveryKey() { return this.recoveryKeyHash; }
 
     /**
      * Setzte das Hash Passwort und generiere den Sicherheitstoken/Salt
@@ -114,7 +123,14 @@ public class Benutzer {
      */
     private void initialisereSaltundHashPasswort(String klartextPasswort, SicherheitsService security) {
         // Logik an den SicherheitsService auslagern
-        this.salt = security.generiereZufallssalt();
-        this.passwortHash = security.hashPasswort(klartextPasswort, this.salt);
+        this.saltPasswort = security.generiereZufallssalt();
+        this.passwortHash = security.hashData(klartextPasswort, this.saltPasswort);
+    }
+
+    private void initialisereSaltundRecoveryKey(String klartextRecoveryKey, SicherheitsService security) {
+        // Logik an den Sicherheitsservice auslagern
+        this.saltRecoveryKey = security.generiereZufallssalt();
+        this.recoveryKeyHash = security.hashData(klartextRecoveryKey, this.saltRecoveryKey);
+
     }
 }
